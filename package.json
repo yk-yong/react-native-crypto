@@ -1,6 +1,6 @@
 {
   "name": "@yk-yong/react-native-crypto",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Native code for cryptography",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
