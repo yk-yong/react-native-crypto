@@ -47,17 +47,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yk-yong/yk-yong-react-native-crypto.git"
+    "url": "git+https://github.com/yk-yong/react-native-crypto.git"
   },
   "author": "John Yk <yikok.yong@gmail.com> (https://github.com/yk-yong)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yk-yong/yk-yong-react-native-crypto/issues"
+    "url": "https://github.com/yk-yong/react-native-crypto/issues"
   },
-  "homepage": "https://github.com/yk-yong/yk-yong-react-native-crypto#readme",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
-  },
+  "homepage": "https://github.com/yk-yong/react-native-crypto#readme",
   "devDependencies": {
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/compat": "^1.3.2",
