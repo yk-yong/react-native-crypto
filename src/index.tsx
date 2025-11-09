@@ -1,5 +1,21 @@
 import ReactNativeCrypto from './NativeReactNativeCrypto';
 
-export function multiply(a: number, b: number): number {
-  return ReactNativeCrypto.multiply(a, b);
+export function hmacSha256(key: string, message: string): Promise<string> {
+  return ReactNativeCrypto.hmacSha256(key, message);
+}
+
+export function sha256(message: string): Promise<string> {
+  return ReactNativeCrypto.sha256(message);
+}
+
+export function sha1(message: string): Promise<string> {
+  return ReactNativeCrypto.sha1(message);
+}
+
+export function convertHashEncoding(
+  hash: string,
+  fromEncoding: 'hex' | 'base64',
+  toEncoding: 'hex' | 'base64'
+): Promise<string> {
+  return ReactNativeCrypto.convertHashEncoding(hash, fromEncoding, toEncoding);
 }
