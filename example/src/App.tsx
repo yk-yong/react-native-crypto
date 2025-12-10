@@ -1,4 +1,10 @@
-import { hmacSha256, sha1, sha256 } from '@yk-yong/react-native-crypto';
+import {
+  hmacSha256,
+  sha1,
+  sha256,
+  tripleDesDecrypt,
+  tripleDesEncrypt,
+} from '@yk-yong/react-native-crypto';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -11,6 +17,7 @@ export default function App() {
   const [hash, setHash] = useState<string>('');
   const [hashSha1, setHashSha1] = useState<string>('');
   const [hmac, setHmac] = useState<string>('');
+  const [tripleDesResult, setTripleDesResult] = useState<string>('');
 
   useEffect(() => {
     async function computeHash() {
@@ -39,6 +46,17 @@ export default function App() {
     computeHmac();
   }, []);
 
+  useEffect(() => {
+    async function computeTripleDes() {
+      const key = 'secret-key';
+      const data = 'Hello, World!';
+      const encryptedData = await tripleDesEncrypt(key, data);
+      const decryptedData = await tripleDesDecrypt(key, encryptedData);
+      setTripleDesResult(decryptedData);
+    }
+    computeTripleDes();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text>
@@ -55,6 +73,11 @@ export default function App() {
         {hmac === helloWorldHmacSha256Base64
           ? ' HMAC-SHA256 is valid!'
           : ' HMAC-SHA256 is invalid.'}
+      </Text>
+      <Text>
+        {tripleDesResult === 'Hello, World!'
+          ? ' TripleDES encryption/decryption is valid!'
+          : ' TripleDES encryption/decryption is invalid.'}
       </Text>
     </View>
   );

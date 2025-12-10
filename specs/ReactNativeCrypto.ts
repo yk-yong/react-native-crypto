@@ -10,6 +10,8 @@ export interface Spec extends TurboModule {
     fromEncoding: 'hex' | 'base64',
     toEncoding: 'hex' | 'base64'
   ): Promise<string>;
+  tripleDesEncrypt(key: string, data: string): Promise<string>;
+  tripleDesDecrypt(key: string, encryptedData: string): Promise<string>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>('ReactNativeCrypto');

@@ -19,3 +19,14 @@ export function convertHashEncoding(
 ): Promise<string> {
   return ReactNativeCrypto.convertHashEncoding(hash, fromEncoding, toEncoding);
 }
+
+export function tripleDesEncrypt(key: string, data: string): Promise<string> {
+  return ReactNativeCrypto.tripleDesEncrypt(key, data);
+}
+
+export function tripleDesDecrypt(
+  key: string,
+  encryptedData: string
+): Promise<string> {
+  return ReactNativeCrypto.tripleDesDecrypt(key, encryptedData);
+}
