@@ -48,11 +48,16 @@ export default function App() {
 
   useEffect(() => {
     async function computeTripleDes() {
-      const key = 'secret-key';
-      const data = 'Hello, World!';
-      const encryptedData = await tripleDesEncrypt(key, data);
-      const decryptedData = await tripleDesDecrypt(key, encryptedData);
-      setTripleDesResult(decryptedData);
+      try {
+        const key = '47c4fa1fdcca1360d5e5382ba1073ab7c24ca587aab49775'; // 24-byte key for TripleDES
+        const data = 'Hello, World!';
+        const encryptedData = await tripleDesEncrypt(key, data);
+        const decryptedData = await tripleDesDecrypt(key, encryptedData);
+
+        setTripleDesResult(decryptedData);
+      } catch (error) {
+        console.log('TripleDES Error:', error);
+      }
     }
     computeTripleDes();
   }, []);
