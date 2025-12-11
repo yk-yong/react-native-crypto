@@ -8,11 +8,13 @@
 // Helper method to convert hex string to NSData
 - (NSData *)hexStringToData:(NSString *)hexString {
     NSMutableData *data = [NSMutableData data];
-    unsigned char byte;
+    unsigned int hexValue;
     for (NSUInteger i = 0; i < hexString.length; i += 2) {
         NSString *hexByte = [hexString substringWithRange:NSMakeRange(i, 2)];
-        byte = (unsigned char)[[NSScanner scannerWithString:hexByte] scanHexInt:&byte] ? byte : 0;
-        [data appendBytes:&byte length:1];
+        if ([[NSScanner scannerWithString:hexByte] scanHexInt:&hexValue]) {
+            unsigned char byte = (unsigned char)hexValue;
+            [data appendBytes:&byte length:1];
+        }
     }
     return data;
 }
