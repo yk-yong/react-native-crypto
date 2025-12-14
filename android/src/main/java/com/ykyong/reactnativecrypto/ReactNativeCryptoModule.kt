@@ -5,12 +5,16 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.annotations.ReactModule
 import java.security.MessageDigest
+import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 @ReactModule(name = ReactNativeCryptoModule.NAME)
 class ReactNativeCryptoModule(reactContext: ReactApplicationContext) :
   NativeReactNativeCryptoSpec(reactContext) {
+
+  private val TRANSFORMATION = "Desede/ECB/PKCS5Padding"
+  private val ALGORITHM = "DESede"
 
   override fun getName(): String {
     return NAME
@@ -83,25 +87,37 @@ class ReactNativeCryptoModule(reactContext: ReactApplicationContext) :
   override fun tripleDesEncrypt(key: String, data: String, promise: Promise): Unit {
     try {
       // Decode the key from base64 or hex
-      val keyBytes = if (key.length == 48) {
-        hexToBytes(key)
-      } else {
-        Base64.decode(key, Base64.DEFAULT)
-      }
+//      val keyBytes = if (key.length == 48) {
+//        hexToBytes(key)
+//      } else {
+//        Base64.decode(key, Base64.DEFAULT)
+//      }
+//
+//      // Ensure key is 24 bytes (192 bits) for 3DES
+//      if (keyBytes.size != 24) {
+//        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
+//      }
+//
+//      val secretKey = SecretKeySpec(keyBytes, "DESede")
+//      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
+//      cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
+//
+//      val dataBytes = data.toByteArray(Charsets.UTF_8)
+//      val encryptedBytes = cipher.doFinal(dataBytes)
+//      val result = Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
+//
+//      promise.resolve(result)
 
-      // Ensure key is 24 bytes (192 bits) for 3DES
-      if (keyBytes.size != 24) {
-        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
-      }
+      val keySpec = getKeySpec(key)
 
-      val secretKey = SecretKeySpec(keyBytes, "DESede")
-      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
-      cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
+      val cipher = Cipher.getInstance(TRANSFORMATION)
+      // ECB mode does NOT use an IV, so we only pass the mode and key
+      cipher.init(Cipher.ENCRYPT_MODE, keySpec)
 
-      val dataBytes = data.toByteArray(Charsets.UTF_8)
-      val encryptedBytes = cipher.doFinal(dataBytes)
-      val result = Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
+      val plainBytes = data.toByteArray(Charsets.UTF_8)
+      val cipherText = cipher.doFinal(plainBytes)
 
+      val result = Base64.encodeToString(cipherText, Base64.NO_WRAP)
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("ENCRYPTION_ERROR", "Triple DES encryption failed: ${e.message}", e)
@@ -111,29 +127,66 @@ class ReactNativeCryptoModule(reactContext: ReactApplicationContext) :
   override fun tripleDesDecrypt(key: String, encryptedData: String, promise: Promise): Unit {
     try {
       // Decode the key from base64 or hex
-      val keyBytes = if (key.length == 48) {
-        hexToBytes(key)
-      } else {
-        Base64.decode(key, Base64.DEFAULT)
-      }
+//      val keyBytes = if (key.length == 48) {
+//        hexToBytes(key)
+//      } else {
+//        Base64.decode(key, Base64.DEFAULT)
+//      }
+//
+//      // Ensure key is 24 bytes (192 bits) for 3DES
+//      if (keyBytes.size != 24) {
+//        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
+//      }
+//
+//      val secretKey = SecretKeySpec(keyBytes, "DESede")
+//      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
+//      cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey)
+//
+//      val encryptedBytes = Base64.decode(encryptedData, Base64.DEFAULT)
+//      val decryptedBytes = cipher.doFinal(encryptedBytes)
+//      val result = String(decryptedBytes, Charsets.UTF_8)
+//
+//      promise.resolve(result)
 
-      // Ensure key is 24 bytes (192 bits) for 3DES
-      if (keyBytes.size != 24) {
-        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
-      }
+      val keySpec = getKeySpec(key)
 
-      val secretKey = SecretKeySpec(keyBytes, "DESede")
-      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
-      cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey)
+      val cipher = Cipher.getInstance(TRANSFORMATION)
+      cipher.init(Cipher.DECRYPT_MODE, keySpec)
 
       val encryptedBytes = Base64.decode(encryptedData, Base64.DEFAULT)
-      val decryptedBytes = cipher.doFinal(encryptedBytes)
-      val result = String(decryptedBytes, Charsets.UTF_8)
+      val plainBytes = cipher.doFinal(encryptedBytes)
 
+      val result = String(plainBytes, Charsets.UTF_8)
       promise.resolve(result)
     } catch (e: Exception) {
       promise.reject("DECRYPTION_ERROR", "Triple DES decryption failed: ${e.message}", e)
     }
+  }
+
+  private fun getKeySpec(key: String): SecretKeySpec {
+    var keyBytes = key.toByteArray(Charsets.UTF_8)
+
+    // Case 1: Key is already 24 bytes. Perfect.
+    if (keyBytes.size == 24) {
+      return SecretKeySpec(keyBytes, ALGORITHM)
+    }
+
+    // Case 2: Key is 16 bytes (Common in CryptoJS).
+    // We must mimic "2-Key Triple DES" by copying the first 8 bytes to the end.
+    // K1 (8) + K2 (8) -> K1 (8) + K2 (8) + K1 (8)
+    if (keyBytes.size == 16) {
+      val key24Bytes = ByteArray(24)
+      System.arraycopy(keyBytes, 0, key24Bytes, 0, 16)       // Copy first 16 bytes
+      System.arraycopy(keyBytes, 0, key24Bytes, 16, 8)       // Repeat first 8 bytes at the end
+      return SecretKeySpec(key24Bytes, ALGORITHM)
+    }
+
+    // Case 3: Any other length (Short or Long) -> Fallback to Zero Padding or Truncation
+    // This is a safety catch-all.
+    val key24Bytes = ByteArray(24)
+    val lengthToCopy = if (keyBytes.size > 24) 24 else keyBytes.size
+    System.arraycopy(keyBytes, 0, key24Bytes, 0, lengthToCopy)
+    return SecretKeySpec(key24Bytes, ALGORITHM)
   }
 
   companion object {
