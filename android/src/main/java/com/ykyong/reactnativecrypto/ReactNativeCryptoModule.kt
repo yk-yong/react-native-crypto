@@ -86,28 +86,6 @@ class ReactNativeCryptoModule(reactContext: ReactApplicationContext) :
 
   override fun tripleDesEncrypt(key: String, data: String, promise: Promise): Unit {
     try {
-      // Decode the key from base64 or hex
-//      val keyBytes = if (key.length == 48) {
-//        hexToBytes(key)
-//      } else {
-//        Base64.decode(key, Base64.DEFAULT)
-//      }
-//
-//      // Ensure key is 24 bytes (192 bits) for 3DES
-//      if (keyBytes.size != 24) {
-//        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
-//      }
-//
-//      val secretKey = SecretKeySpec(keyBytes, "DESede")
-//      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
-//      cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, secretKey)
-//
-//      val dataBytes = data.toByteArray(Charsets.UTF_8)
-//      val encryptedBytes = cipher.doFinal(dataBytes)
-//      val result = Base64.encodeToString(encryptedBytes, Base64.NO_WRAP)
-//
-//      promise.resolve(result)
-
       val keySpec = getKeySpec(key)
 
       val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -126,28 +104,6 @@ class ReactNativeCryptoModule(reactContext: ReactApplicationContext) :
 
   override fun tripleDesDecrypt(key: String, encryptedData: String, promise: Promise): Unit {
     try {
-      // Decode the key from base64 or hex
-//      val keyBytes = if (key.length == 48) {
-//        hexToBytes(key)
-//      } else {
-//        Base64.decode(key, Base64.DEFAULT)
-//      }
-//
-//      // Ensure key is 24 bytes (192 bits) for 3DES
-//      if (keyBytes.size != 24) {
-//        throw IllegalArgumentException("Key must be 24 bytes (192 bits) for Triple DES")
-//      }
-//
-//      val secretKey = SecretKeySpec(keyBytes, "DESede")
-//      val cipher = javax.crypto.Cipher.getInstance("DESede/ECB/PKCS5Padding")
-//      cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey)
-//
-//      val encryptedBytes = Base64.decode(encryptedData, Base64.DEFAULT)
-//      val decryptedBytes = cipher.doFinal(encryptedBytes)
-//      val result = String(decryptedBytes, Charsets.UTF_8)
-//
-//      promise.resolve(result)
-
       val keySpec = getKeySpec(key)
 
       val cipher = Cipher.getInstance(TRANSFORMATION)
