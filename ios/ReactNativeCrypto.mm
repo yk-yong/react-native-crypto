@@ -29,6 +29,37 @@
     return hexString;
 }
 
+// Helper method to convert key to 24-byte format for Triple DES
+// Matches the Android implementation logic
+- (NSData *)getKeySpec:(NSString *)key {
+    NSData *keyData = [key dataUsingEncoding:NSUTF8StringEncoding];
+    NSUInteger keyLength = keyData.length;
+
+    // Case 1: Key is already 24 bytes. Perfect.
+    if (keyLength == 24) {
+        return keyData;
+    }
+
+    // Case 2: Key is 16 bytes (Common in CryptoJS).
+    // We must mimic "2-Key Triple DES" by copying the first 8 bytes to the end.
+    // K1 (8) + K2 (8) -> K1 (8) + K2 (8) + K1 (8)
+    if (keyLength == 16) {
+        NSMutableData *key24Bytes = [NSMutableData dataWithCapacity:24];
+        [key24Bytes appendData:keyData];  // First 16 bytes
+        [key24Bytes appendData:[keyData subdataWithRange:NSMakeRange(0, 8)]];  // First 8 bytes again
+        return key24Bytes;
+    }
+
+    // Case 3: Any other length (Short or Long) -> Fallback to Zero Padding or Truncation
+    // This is a safety catch-all.
+    NSMutableData *key24Bytes = [NSMutableData dataWithLength:24];
+    NSUInteger lengthToCopy = (keyLength > 24) ? 24 : keyLength;
+    [key24Bytes replaceBytesInRange:NSMakeRange(0, lengthToCopy)
+                          withBytes:keyData.bytes
+                             length:lengthToCopy];
+    return key24Bytes;
+}
+
 - (void)sha256:(NSString *)message
        resolve:(RCTPromiseResolveBlock)resolve
         reject:(RCTPromiseRejectBlock)reject {
@@ -120,19 +151,8 @@
                  resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject {
     @try {
-        // Decode the key from base64 or hex
-        NSData *keyData;
-        if (key.length == 48) {
-            keyData = [self hexStringToData:key];
-        } else {
-            keyData = [[NSData alloc] initWithBase64EncodedString:key options:0];
-        }
-
-        // Ensure key is 24 bytes (192 bits) for 3DES
-        if (keyData.length != 24) {
-            reject(@"INVALID_KEY", @"Key must be 24 bytes (192 bits) for Triple DES", nil);
-            return;
-        }
+        // Use the helper method to get properly formatted 24-byte key
+        NSData *keyData = [self getKeySpec:key];
 
         NSData *dataToEncrypt = [data dataUsingEncoding:NSUTF8StringEncoding];
         size_t bufferSize = dataToEncrypt.length + kCCBlockSize3DES;
@@ -180,19 +200,8 @@
         // Ensure key is 24 bytes (192 bits) for 3DES
         if (keyData.length != 24) {
             reject(@"INVALID_KEY", @"Key must be 24 bytes (192 bits) for Triple DES", nil);
-            return;
-        }
-
-        NSData *dataToDecrypt = [[NSData alloc] initWithBase64EncodedString:encryptedData options:0];
-        size_t bufferSize = dataToDecrypt.length + kCCBlockSize3DES;
-        void *buffer = malloc(bufferSize);
-
-        size_t numBytesDecrypted = 0;
-        CCCryptorStatus cryptStatus = CCCrypt(kCCDecrypt,
-                                             kCCAlgorithm3DES,
-                                             kCCOptionPKCS7Padding,
-                                             keyData.bytes,
-                                             keyData.length,
+           Use the helper method to get properly formatted 24-byte key
+        NSData *keyData = [self getKeySpec:key];                                    keyData.length,
                                              nil,
                                              dataToDecrypt.bytes,
                                              dataToDecrypt.length,
